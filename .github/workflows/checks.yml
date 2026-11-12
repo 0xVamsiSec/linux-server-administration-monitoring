@@ -1,0 +1,16 @@
+name: Bash checks
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Run Bash smoke tests
+        run: bash tests/smoke.sh

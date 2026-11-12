@@ -1,0 +1,8 @@
+/backups/
+/logs/
+/data/
+/ssh/
+/reports/*
+!/reports/sample_health_report.txt
+*.log
+*.tar.gz

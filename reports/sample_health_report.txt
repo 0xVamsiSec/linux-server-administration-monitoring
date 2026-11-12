@@ -1,0 +1,29 @@
+Captured on Ubuntu 24.04 under WSL2. Local identifiers were replaced and only standard loopback addresses are shown.
+
+Linux System Health Report
+Timestamp: 2026-11-12T02:43:41+00:00
+Hostname: ubuntu-lab
+Uptime and load averages:
+ 02:43:42 up 22 min,  2 users,  load average: 0.10, 0.07, 0.02
+
+CPU utilization (1-second sample): 0.0%
+
+Memory usage:
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       499Mi       6.9Gi       3.8Mi       378Mi       7.1Gi
+Swap:          2.0Gi          0B       2.0Gi
+
+Disk usage:
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/example       1007G   14G  943G   2% /
+
+Top 5 processes by lifetime CPU percentage:
+    PID COMMAND         %CPU %MEM
+      1 process-1         0.9  0.0
+      2 process-2         0.1  0.1
+      3 process-3         0.0  0.1
+      4 process-4         0.0  0.0
+      5 process-5         0.0  0.0
+
+Interface addresses:
+lo               UNKNOWN        127.0.0.1/8 ::1/128

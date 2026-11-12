@@ -1,0 +1,7 @@
+# Copy these entries into the lab user's crontab with crontab -e.
+# Clone or copy the repo to ~/linux-server-administration before enabling them.
+# Create ~/linux-monitoring-lab/logs and ~/linux-monitoring-lab/data first.
+# Times follow the Ubuntu system time zone.
+PATH=/usr/bin:/bin
+0 9 * * * umask 077 && /bin/bash "$HOME/linux-server-administration/scripts/system_health.sh" >> "$HOME/linux-monitoring-lab/logs/health.log" 2>&1
+0 0 * * * umask 077 && /bin/bash "$HOME/linux-server-administration/scripts/backup.sh" >> "$HOME/linux-monitoring-lab/logs/backup.log" 2>&1
