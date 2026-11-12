@@ -7,7 +7,8 @@ A hands-on Linux administration lab for Ubuntu on WSL2 or in a VM. Practice mana
 Use Ubuntu with systemd and the utilities listed in the [setup guide](documentation/installation.md). Run these commands from your Ubuntu shell. The clone path matches the one used by the Cron template.
 
 ```bash
-git clone https://github.com/0xVamsiSec/linux-server-administration.git "$HOME/linux-server-administration"
+git clone https://github.com/0xVamsiSec/linux-server-administration-monitoring.git \
+  "$HOME/linux-server-administration"
 cd "$HOME/linux-server-administration"
 
 mkdir -p "$HOME/linux-monitoring-lab"/{data,reports,logs,backups}
@@ -28,9 +29,20 @@ sudo bash scripts/log_analysis.sh --since '30 minutes ago' --priority warning --
 
 | Script | What it does |
 | --- | --- |
-| [`system_health.sh`](scripts/system_health.sh) | Samples CPU utilization over one second and reports uptime, memory, disk usage, top processes, and interface addresses. See a [sanitized report from WSL2](reports/sample_health_report.txt). |
-| [`backup.sh`](scripts/backup.sh) | Creates a timestamped `.tar.gz` archive and prints its path after it succeeds. By default it backs up `~/linux-monitoring-lab/data` to `~/linux-monitoring-lab/backups`. Both paths can be supplied as arguments. |
+| [`system_health.sh`](scripts/system_health.sh) | Samples CPU utilization over one second and reports uptime, memory, disks, processes, and interfaces. Supports CPU, memory, and disk alerts and checks named systemd services. See a [sanitized report from WSL2](reports/sample_health_report.txt). |
+| [`backup.sh`](scripts/backup.sh) | Publishes a timestamped `.tar.gz` after compression succeeds. Accepts custom paths and an optional `--retain-days` policy. The default source and destination are `~/linux-monitoring-lab/data` and `~/linux-monitoring-lab/backups`. |
 | [`log_analysis.sh`](scripts/log_analysis.sh) | Filters the system journal by time, unit, severity, and entry count. By default it shows up to 50 entries at warning priority or higher from the past hour. |
+
+## Scheduled monitoring and maintenance
+
+The [Cron template](cron/monitoring.crontab.example) checks CPU and memory at 85%, disk usage at 90%, and the status of `cron.service` at 09:00. Backups run at midnight with 30-day retention. Both jobs write to the lab user's logs. An optional 00:30 job [rotates those logs](documentation/lab.md#rotate-the-lab-logs). Schedules use Ubuntu's system time zone, and the distribution must be running when a job is due.
+
+```bash
+bash scripts/system_health.sh --cpu-threshold 85 --memory-threshold 85 \
+  --disk-threshold 90 --service cron.service
+```
+
+Alerts appear in the report at or above the threshold. Add `--service UNIT` for each unit you want to check. Retention applies only when you supply `--retain-days`, after the new archive has been published. Use a separate backup destination per source if you enable pruning.
 
 ## Lab exercises
 
@@ -38,16 +50,18 @@ sudo bash scripts/log_analysis.sh --since '30 minutes ago' --priority warning --
 2. Inspect and stop a process. Diagnose a deliberate systemd service failure from its journal entries. [Processes and services](documentation/lab.md#processes-and-systemd-services)
 3. Check interfaces, routes, and listening sockets. Verify key-based SSH on `127.0.0.1:2222`. [Networking and local SSH](documentation/lab.md#networking-and-local-ssh)
 4. Extract an archive into a temporary directory and compare it with the source. [Backup and restore](documentation/lab.md#backup-and-restore)
-5. Verify that both Cron jobs produce fresh output. The template schedules health checks at 09:00 and backups at midnight in Ubuntu’s system time zone. On WSL2, the distribution must be running when a job is due. [Cron setup](documentation/lab.md#schedule-and-verify-cron) · [Schedule template](cron/monitoring.crontab.example)
+5. Verify that the scheduled jobs write a fresh health report and create a restorable backup. [Cron setup](documentation/lab.md#schedule-and-verify-cron)
 
 ## Verification
 
 Verified on Ubuntu 24.04.5 LTS under WSL2. The live checks confirmed group access and outsider denial, systemd failure recovery, key-based loopback SSH, and backup restoration. Both Cron jobs ran as a regular user on a temporary every-minute schedule. [Full test results](documentation/project_report.md#verification)
 
-Run the smoke tests from the repository root. They check script syntax, report output, backup and restore behavior, and journal filter arguments. The same tests run on pushes and pull requests. [GitHub Actions workflow](.github/workflows/checks.yml)
+The updated Cron commands also ran under a clean environment with a temporary Linux home. View the sanitized terminal output for [health alerts and service states](screenshots/health-alerts.png) and [backup retention and log rotation](screenshots/backup-and-log-rotation.png).
+
+Run the smoke tests from the repository root with `logrotate` installed. They cover report output, alert thresholds, service states, backup restoration and pruning, log rotation, and journal filter arguments. The same tests run on pushes and pull requests. [GitHub Actions workflow](.github/workflows/checks.yml)
 
 ```bash
 bash tests/smoke.sh
 ```
 
-Use the [validation checklist](documentation/build-plan.md) to record your lab results and the [troubleshooting guide](documentation/troubleshooting.md) to investigate failures.
+Use the [validation checklist](documentation/build-plan.md) to record your lab results and the [troubleshooting guide](documentation/troubleshooting.md) to investigate failures. The [interview notes](documentation/interview.md) explain the design choices and how the exercises relate to SAP BASIS work.

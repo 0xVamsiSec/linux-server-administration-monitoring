@@ -1,0 +1,10 @@
+# Replace LAB_HOME with the absolute path to your Linux home directory.
+"LAB_HOME/linux-monitoring-lab/logs/health.log" "LAB_HOME/linux-monitoring-lab/logs/backup.log" {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0600
+}

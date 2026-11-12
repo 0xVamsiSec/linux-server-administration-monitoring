@@ -56,7 +56,7 @@ Once Ubuntu is verified, install the baseline utilities inside the lab distribut
 
 ```bash
 sudo apt update
-sudo apt install cron git htop iproute2 iputils-ping procps tar gzip
+sudo apt install cron git htop iproute2 iputils-ping procps tar gzip logrotate
 ```
 
 Install `openssh-server` during the [SSH exercise](lab.md#networking-and-local-ssh), which uses a separate listener bound to loopback.

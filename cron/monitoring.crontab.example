@@ -3,5 +3,7 @@
 # Create ~/linux-monitoring-lab/logs and ~/linux-monitoring-lab/data first.
 # Times follow the Ubuntu system time zone.
 PATH=/usr/bin:/bin
-0 9 * * * umask 077 && /bin/bash "$HOME/linux-server-administration/scripts/system_health.sh" >> "$HOME/linux-monitoring-lab/logs/health.log" 2>&1
-0 0 * * * umask 077 && /bin/bash "$HOME/linux-server-administration/scripts/backup.sh" >> "$HOME/linux-monitoring-lab/logs/backup.log" 2>&1
+0 9 * * * umask 077 && /bin/bash "$HOME/linux-server-administration/scripts/system_health.sh" --cpu-threshold 85 --memory-threshold 85 --disk-threshold 90 --service cron.service >> "$HOME/linux-monitoring-lab/logs/health.log" 2>&1
+0 0 * * * umask 077 && /bin/bash "$HOME/linux-server-administration/scripts/backup.sh" --retain-days 30 >> "$HOME/linux-monitoring-lab/logs/backup.log" 2>&1
+# Optional. Install the logrotate configuration before uncommenting this entry.
+# 30 0 * * * umask 077 && /usr/sbin/logrotate --state "$HOME/linux-monitoring-lab/logrotate.status" "$HOME/linux-monitoring-lab/logrotate.conf"

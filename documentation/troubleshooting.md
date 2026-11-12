@@ -12,7 +12,9 @@ Start with the failing command and its exact error. Record the time, the unit or
 | SSH rejects the key | ssh -v with the same options used in the lab | Verify the selected client identity, login name, home directory permissions, and server log. |
 | Network name lookup fails | ip route and getent hosts HOSTNAME | Compare the interface and route state with name lookup. Test localhost independently of external DNS. |
 | Backup returns an error | Verify the source exists and use df -h and ls -ld on the destination | Check free space and write access. Keep the destination outside the source and use a filesystem that supports hard links. |
+| A new backup exists but pruning failed | Read the retention diagnostics in backup.log | Check write access to the dedicated backup directory. The new archive was published before the cleanup attempted to remove expired files. |
 | Cron logs are missing | crontab -l, systemctl is-active cron.service, and sudo journalctl -u cron.service -n 30 | Check the Linux time zone, script paths, and existence of the log directory. Keep Ubuntu open for the next scheduled minute. |
+| Logs are growing without rotation | logrotate --debug --state STATE_FILE CONFIG_FILE | Verify that the optional Cron entry is active, the configuration uses absolute Linux paths, and both files are accessible to the lab user. |
 | Log output is empty or access is denied | sudo bash scripts/log_analysis.sh --since '1 hour ago' --priority info | A successful query can contain zero matching entries. If the command reports an error, check journal access and the unit or time filter. |
 
 Before publishing captured output, remove local hostnames, personal account names, private IPs, and unrelated journal entries. Keep backups, raw logs, and SSH keys outside the repository.

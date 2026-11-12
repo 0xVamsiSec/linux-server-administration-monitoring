@@ -80,12 +80,32 @@ ping -c 2 127.0.0.1
 ss -tuln
 ~~~
 
-The exercise starts a dedicated OpenSSH instance on 127.0.0.1:2222. On a fresh lab distribution where /usr/sbin/sshd is absent, mask the default SSH service and socket before installing the server so the package cannot start a default listener. Leave existing SSH services alone on distributions where the server is already installed. [Ubuntu notes on SSH socket activation](https://documentation.ubuntu.com/release-notes/24.04/)
+The exercise starts a dedicated OpenSSH instance on 127.0.0.1:2222. On a fresh lab distribution, use runtime masks to prevent the package from starting the default listener during installation. The command records the original state of each unit and tracks which masks it adds. Keep the same Bash session for cleanup. [Ubuntu notes on SSH socket activation](https://documentation.ubuntu.com/release-notes/24.04/)
 
 ~~~bash
-sudo systemctl mask ssh.service ssh.socket
-sudo apt install openssh-server
+ssh_lab_masks=()
+if [[ ! -x /usr/sbin/sshd ]]; then
+    mask_failed=0
+    for unit in ssh.service ssh.socket; do
+        state=$(systemctl is-enabled "$unit" 2>/dev/null) || true
+        printf '%s before lab: %s\n' "$unit" "${state:-not found}"
+        case $state in
+            masked|masked-runtime) continue ;;
+        esac
+        if sudo systemctl mask --runtime "$unit"; then
+            ssh_lab_masks+=("$unit")
+        else
+            mask_failed=1
+            break
+        fi
+    done
+    if (( mask_failed == 0 )); then
+        sudo apt install openssh-server
+    fi
+fi
 ~~~
+
+If masking or installation fails, run the mask cleanup below before retrying.
 
 Run `ss -ltn 'sport = :2222'` and verify that it returns no listener before continuing. Run this exercise as your regular, non-root Ubuntu login:
 
@@ -130,6 +150,14 @@ rm -f -- "$ssh_lab"/{client_ed25519,client_ed25519.pub,host_ed25519,host_ed25519
 rmdir -- "$ssh_lab"
 ~~~
 
+Remove only the runtime masks added in this Bash session. Unmasking allows the units to be started again and leaves any original masks in place.
+
+~~~bash
+if (( ${#ssh_lab_masks[@]} > 0 )); then
+    sudo systemctl unmask --runtime "${ssh_lab_masks[@]}"
+fi
+~~~
+
 ## Backup and restore
 
 Use the sample file created in the [quick start](../README.md#quick-start). Restore a fresh archive to a separate directory:
@@ -143,6 +171,8 @@ diff -r -- "$HOME/linux-monitoring-lab/data" "$restore_dir/data"
 ~~~
 
 An empty diff and exit status 0 confirm the restored contents match. The script accepts custom paths, including paths with spaces. Choose a destination outside the source tree on a filesystem that supports hard links, such as Ubuntu's native filesystem.
+
+To keep a 30-day window in a dedicated backup directory, run `bash scripts/backup.sh --retain-days 30`. The script first publishes the new archive, then removes matching regular archives in that directory whose modification time is at least 30 days old. It leaves unrelated files, symlinks, and subdirectories alone. If pruning fails, the command reports the error and the new archive remains available. [GNU Findutils timestamp comparisons](https://www.gnu.org/software/findutils/manual/html_node/find_html/Comparing-Timestamps.html)
 
 ## Schedule and verify Cron
 
@@ -165,3 +195,16 @@ ls -lt "$HOME/linux-monitoring-lab/backups"
 ~~~
 
 Look for a fresh health timestamp and a new archive from the same minute. Restore the template's daily schedules or remove the lab entries when finished. Cron can run while WSL is active. [Microsoft systemd lifecycle notes](https://learn.microsoft.com/en-us/windows/wsl/systemd/)
+
+## Rotate the lab logs
+
+Copy the [logrotate template](../cron/monitoring.logrotate.example) to the lab directory and replace both instances of `LAB_HOME` with your absolute Linux home path, for example `/home/ubuntu`. Validate it as your regular user before enabling the optional 00:30 entry in the Cron template.
+
+~~~bash
+cp -i -- cron/monitoring.logrotate.example "$HOME/linux-monitoring-lab/logrotate.conf"
+nano "$HOME/linux-monitoring-lab/logrotate.conf"
+logrotate --debug --state "$HOME/linux-monitoring-lab/logrotate.status" \
+  "$HOME/linux-monitoring-lab/logrotate.conf"
+~~~
+
+The configuration keeps seven rotations per log, delays compression until the next rotation, and creates the new active files with mode 0600. It uses a separate state file for the lab. To check the results without waiting a day, run the same command with `--force` in place of `--debug` after both lab logs contain output, then check for `health.log.1` and `backup.log.1`. [logrotate reference](https://github.com/logrotate/logrotate/blob/main/logrotate.8.in)

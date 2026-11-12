@@ -26,7 +26,9 @@ Work through the [Ubuntu setup](installation.md) before running the [administrat
 ## Completion criteria
 
 - All three scripts pass `bash -n` and run successfully in Ubuntu.
+- Health alerts trigger at the configured limits and report service status.
 - The lab demonstrates group permissions, process inspection, service recovery, and loopback SSH.
-- A backup restores the sample data, and a missing source fails clearly.
+- A backup restores the sample data, and a missing source fails clearly. Retention prunes expired matching archives after success.
 - Each Cron job produces an observed result under the intended user account.
+- The logrotate configuration retains old output and creates new active logs with mode 0600.
 - The lab evidence records the results observed in Ubuntu. Review local identifiers and private addresses before sharing the output.

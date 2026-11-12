@@ -1,2 +1,3 @@
 *.sh text eol=lf
 *.crontab.example text eol=lf
+*.logrotate.example text eol=lf

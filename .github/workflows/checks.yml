@@ -12,5 +12,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Install logrotate
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y logrotate
       - name: Run Bash smoke tests
         run: bash tests/smoke.sh
